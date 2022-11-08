@@ -108,8 +108,7 @@ public class WearActivity
 
       // print the HR value in debug
       Log.d(TAG, "Heart Rate: " + hRate);
-    } else // print debug for unknown or unavailable sensor
-    Log.d(TAG, "Unknown sensor type");
+    } else Log.d(TAG, "Unknown sensor type"); // print debug for unknown or unavailable sensor
   }
 
   @Override
