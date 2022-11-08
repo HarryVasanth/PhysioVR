@@ -15,40 +15,42 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
-
 import java.util.ArrayList;
 
-public class ListActivity extends ActionBarActivity implements BluetoothAdapter.LeScanCallback {
-    public static final int MENU_SCAN = 0;
-    public static final int LIST_DEVICE_MAX = 5;
+public class ListActivity
+  extends ActionBarActivity
+  implements BluetoothAdapter.LeScanCallback {
 
-    public static String TAG = "BluetoothList";
+  public static final int MENU_SCAN = 0;
+  public static final int LIST_DEVICE_MAX = 5;
 
-    /** Device Scanning Time (ms) */
-    private static final long SCAN_PERIOD = 5000;
+  public static String TAG = "BluetoothList";
 
-    /** Intent code for requesting Bluetooth enable */
-    private static final int REQUEST_ENABLE_BT = 1;
+  /** Device Scanning Time (ms) */
+  private static final long SCAN_PERIOD = 5000;
 
-    private Handler mHandler;
-    private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothGatt mBluetoothGatt;
-    private ArrayList<String> deviceNames = new ArrayList<>();
-    private String myoName = null;
+  /** Intent code for requesting Bluetooth enable */
+  private static final int REQUEST_ENABLE_BT = 1;
 
-    private ArrayAdapter<String> adapter;
+  private Handler mHandler;
+  private BluetoothAdapter mBluetoothAdapter;
+  private BluetoothGatt mBluetoothGatt;
+  private ArrayList<String> deviceNames = new ArrayList<>();
+  private String myoName = null;
 
+  private ArrayAdapter<String> adapter;
 
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // setContentView(R.layout.activity_list);
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-       // setContentView(R.layout.activity_list);
-
-        BluetoothManager mBluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
-        mBluetoothAdapter = mBluetoothManager.getAdapter();
-        mHandler = new Handler();
-/**
+    BluetoothManager mBluetoothManager = (BluetoothManager) getSystemService(
+      BLUETOOTH_SERVICE
+    );
+    mBluetoothAdapter = mBluetoothManager.getAdapter();
+    mHandler = new Handler();
+    /**
        ListView lv = (ListView) findViewById(R.id.listView1);
 
 
@@ -76,88 +78,109 @@ public class ListActivity extends ActionBarActivity implements BluetoothAdapter.
             }
         });
 **/
+  }
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    // Inflate the menu; this adds items to the action bar if it is present.
+    //getMenuInflater().inflate(R.menu.menu_list, menu);
+    menu.add(0, MENU_SCAN, 0, "Scan");
+
+    return true;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here. The action bar will
+    // automatically handle clicks on the Home/Up button, so long
+    // as you specify a parent activity in AndroidManifest.xml.
+    int id = item.getItemId();
+
+    //noinspection SimplifiableIfStatement
+    if (id == MENU_SCAN) {
+      scanDevice();
+      return true;
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //getMenuInflater().inflate(R.menu.menu_list, menu);
-        menu.add(0, MENU_SCAN, 0, "Scan");
+    return super.onOptionsItemSelected(item);
+  }
 
-        return true;
-    }
+  public void onClickScan(View v) {
+    scanDevice();
+  }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == MENU_SCAN) {
-            scanDevice();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    public void onClickScan(View v) {
-        scanDevice();
-    }
-
-    @Override
-    public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+  @Override
+  public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
     // Device Log
-        ParcelUuid[] uuids = device.getUuids();
-        String uuid = "";
-        if (uuids != null) {
-            for (ParcelUuid puuid : uuids) {
-                uuid += puuid.toString() + " ";
-            }
-        }
-
-        String msg = "name=" + device.getName() + ", bondStatus="
-                + device.getBondState() + ", address="
-                + device.getAddress() + ", type" + device.getType()
-                + ", uuids=" + uuid;
-        Log.d("BLEActivity", msg);
-
-        if (device.getName() != null && !deviceNames.contains(device.getName())) {
-            deviceNames.add(device.getName());
-        }
+    ParcelUuid[] uuids = device.getUuids();
+    String uuid = "";
+    if (uuids != null) {
+      for (ParcelUuid puuid : uuids) {
+        uuid += puuid.toString() + " ";
+      }
     }
 
-    public void scanDevice() {
-        // Ensures Bluetooth is available on the device and it is enabled. If not,
-        // displays a dialog requesting user permission to enable Bluetooth.
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        } else {
-            deviceNames.clear();
-            // Scanning Time out by Handler.
-            // The device scanning needs high energy.
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mBluetoothAdapter.stopLeScan(ListActivity.this);
+    String msg =
+      "name=" +
+      device.getName() +
+      ", bondStatus=" +
+      device.getBondState() +
+      ", address=" +
+      device.getAddress() +
+      ", type" +
+      device.getType() +
+      ", uuids=" +
+      uuid;
+    Log.d("BLEActivity", msg);
 
-                    adapter.notifyDataSetChanged();
-                    Toast.makeText(getApplicationContext(), "Stop Device Scan", Toast.LENGTH_SHORT).show();
-
-                }
-            }, SCAN_PERIOD);
-            mBluetoothAdapter.startLeScan(ListActivity.this);
-        }
+    if (device.getName() != null && !deviceNames.contains(device.getName())) {
+      deviceNames.add(device.getName());
     }
+  }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK){
-            scanDevice();
-        }
+  public void scanDevice() {
+    // Ensures Bluetooth is available on the device and it is enabled. If not,
+    // displays a dialog requesting user permission to enable Bluetooth.
+    if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+      Intent enableBtIntent = new Intent(
+        BluetoothAdapter.ACTION_REQUEST_ENABLE
+      );
+      startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+    } else {
+      deviceNames.clear();
+      // Scanning Time out by Handler.
+      // The device scanning needs high energy.
+      mHandler.postDelayed(
+        new Runnable() {
+          @Override
+          public void run() {
+            mBluetoothAdapter.stopLeScan(ListActivity.this);
+
+            adapter.notifyDataSetChanged();
+            Toast
+              .makeText(
+                getApplicationContext(),
+                "Stop Device Scan",
+                Toast.LENGTH_SHORT
+              )
+              .show();
+          }
+        },
+        SCAN_PERIOD
+      );
+      mBluetoothAdapter.startLeScan(ListActivity.this);
     }
+  }
+
+  @Override
+  protected void onActivityResult(
+    int requestCode,
+    int resultCode,
+    Intent data
+  ) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_OK) {
+      scanDevice();
+    }
+  }
 }
